@@ -5,13 +5,20 @@ import UrlList from './UrlList';
 
 function Hero() {
 
-  const [input, setInput] = useState({url: ""});
+  const [longUrl, setLongUrl] = useState("");
   const [error, setError] = useState(false);
-  const [list, setList] = useState([]);
+  const [urls, setUrls] = useState(() => {
+    const savedUrls = localStorage.getItem("shortenedLinks"); 
+    return savedUrls ? JSON.parse(savedUrls) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("shortenedLinks", JSON.stringify(urls));
+  }, [urls]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!input.url) {
+    if (!longUrl) {
       setError(true);
     } else {
       setError(false);
@@ -19,9 +26,16 @@ function Hero() {
   }
 
   const shortenUrl = async (longUrl) => {
+    setError(false);
+
+    if (!longUrl.trim() || !longUrl.startsWith("https")) {
+      setError("Please enter a valid URL");
+      return;
+    }
+
+
     try {
-      const response = await fetch('https://cleanuri.com/api/v1/shorten', {
-        method: 'POST',
+      const response = await axios.post('https://cleanuri.com/api/v1/shorten', {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ url: longUrl }),
       });
@@ -50,17 +64,22 @@ function Hero() {
         <img src={illustration} alt="illustration image" />
       </div>
     </div>
-      <form className="link-input" onSubmit={handleSubmit}>
+      <div className="link-input">
         <div className="form">
-          <input type="url" name='url' value={input.url || ""} onChange={(e) => setInput({ ...input, url: e.target.value })} placeholder='Shorten a link here...' className={error ? "url-error" : ""}/>
+          <input type="url" name='url' value={longUrl || ""} onChange={(e) => setInput({ ...input, url: e.target.value })} placeholder='Shorten a link here...' className={error ? "url-error" : ""}/>
           <div className='button'>
-            <button type="submit">Shorten It!</button>
+            <button type="submit" onClick={handleSubmit}>Shorten It!</button>
             <div className='overlay'></div>
           </div>
         </div>
         {error && <div className='error'>Please add a link</div>}
-      </form>
-      <UrlList list={list} />
+      </div>
+      <div className="link-list">
+      {urls.map((url, index) => (
+        <UrlList url={url} key={index}/>
+      ))}
+      </div>
+      
     </section>
     </>
   )
