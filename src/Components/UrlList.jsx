@@ -7,7 +7,7 @@ function UrlList({ url }) {
   //Save the shortUrl to the clipboard and return state to false after delay
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(list.shortUrl);
+      await navigator.clipboard.writeText(url.shortUrl);
       setCopied(true);
 
       setTimeout(() => {
@@ -20,7 +20,7 @@ function UrlList({ url }) {
   return (
     <>
     
-      <div key={index} className='url-result'>
+      <div className='url-result'>
         <p className="max-md:border-b-2 border-ngray">{url.longUrl}</p>
         <span className="flex max-md:flex-col md:items-center gap-4">
           <p className="text-cyan">
@@ -32,7 +32,6 @@ function UrlList({ url }) {
             {copied ? "Copied!" : "Copy"}
           </button>
         </span>
-        <button onClick={() => copyToClipboard(shortUrl)}>copy</button>
       </div>
        
     
@@ -42,7 +41,7 @@ function UrlList({ url }) {
 }
 
 UrlList.propTypes = {
-  link: PropTypes.shape({
+  url: PropTypes.shape({
     longUrl: PropTypes.string.isRequired,
     shortUrl: PropTypes.string.isRequired,
   }).isRequired,

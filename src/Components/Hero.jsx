@@ -5,7 +5,7 @@ import UrlList from './UrlList';
 
 function Hero() {
 
-  const [longUrl, setLongUrl] = useState("");
+  const [longUrl, setLongUrl] = useState({ url:"" });
   const [error, setError] = useState(false);
   const [urls, setUrls] = useState(() => {
     const savedUrls = localStorage.getItem("shortenedLinks"); 
@@ -18,6 +18,7 @@ function Hero() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    shortenUrl();
     if (!longUrl) {
       setError(true);
     } else {
@@ -25,30 +26,36 @@ function Hero() {
     }
   }
 
-  const shortenUrl = async (longUrl) => {
+  const shortenUrl = async () => {
     setError(false);
 
-    if (!longUrl.trim() || !longUrl.startsWith("https")) {
+    if (!longUrl.url.trim() || !longUrl.url.startsWith("https")) {
       setError("Please enter a valid URL");
       return;
     }
 
+      try {
+        const response = await fetch("/api/server", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: longUrl }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to shorten URL");
+        }
 
-    try {
-      const response = await axios.post('https://cleanuri.com/api/v1/shorten', {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ url: longUrl }),
-      });
-
-      const data = await response.json();
-      if (data.result_url) {
-        setList([...list, { longUrl, shortUrl: data.result_url }]);
-        setInput({ url: "" }); // Clear input after shortening
+        const data = await response.json();
+        setUrls((prev) => [
+          { longUrl: inputUrl, shortUrl: data.result_url },
+          ...prev,
+        ]);
+      } catch (err) {
+        setError(err.message);
       }
-    } catch (error) {
-      console.error("Error shortening URL:", error);
-    }
-  };
+
+      setLongUrl(""); //clear input on click
+    };
+
 
   return (
     <>
@@ -66,7 +73,7 @@ function Hero() {
     </div>
       <div className="link-input">
         <div className="form">
-          <input type="url" name='url' value={longUrl || ""} onChange={(e) => setInput({ ...input, url: e.target.value })} placeholder='Shorten a link here...' className={error ? "url-error" : ""}/>
+          <input type="url" name='url' value={longUrl.url || ""} onChange={(e) => setLongUrl({ ...longUrl, url: e.target.value })} placeholder='Shorten a link here...' className={error ? "url-error" : ""}/>
           <div className='button'>
             <button type="submit" onClick={handleSubmit}>Shorten It!</button>
             <div className='overlay'></div>
